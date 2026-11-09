@@ -28,7 +28,11 @@
 [Container]
 # ------ IDENTITY ------
 # Container name. If unset, defaults to systemd-%N.
-# ContainerName=<name>
+# ContainerName=<appname>
+
+# Map your host UID into the container so bind-mounted files are
+# owned by YOU on the host (rootless), keeping volume permissions sane.
+# UserNS=keep-id
 
 # Lets `podman auto-update` pull a newer image. Pick ONE:
 #   registry = check remote registry   |   local = only locally built images
@@ -38,17 +42,17 @@
 # One Environment= per variable. PUID/PGID/TZ are LinuxServer.io conventions.
 # TZ is just an env var — there is no separate Timezone= key.
 # (DO NOT HARDCODE SECRETS — use EnvironmentFile for those.)
-# Environment=PUID=<uid>
-# Environment=PGID=<gid>
-# Environment=TZ=<timezone>
+# Environment=PUID=1000
+# Environment=PGID=1000
+# Environment=TZ=<Region/City>
 
 # Load variables (including secrets) from a gitignored file.
-# EnvironmentFile=%h/<app_name>/.env
+# EnvironmentFile=%h/<appname>/.env
 
 # ------ IMAGE ------
 # Image to run. Pin a version tag (e.g. :4.0) instead of :latest.
 # Find images with: podman search <name>
-# Image=<registry/owner/image:tag>
+# Image=<registry>/<repo>/<image>:<tag>
 
 # ------ NETWORKING ------
 # Join a user-defined network so containers reach each other BY NAME.
@@ -57,10 +61,10 @@
 # Network=<name>.network
 
 # Set this container's hostname (optional).
-# HostName=<custom name>
+# HostName=<hostname>
 
 # Expose a container port to the host for local access.
-# PublishPort=<hostPort:containerPort>
+# PublishPort=<host-port>:<container-port>
 
 # ------ STORAGE ------
 # Persist data on the host so it survives container recreation.
@@ -68,8 +72,8 @@
 #   :Z = PRIVATE SELinux label (only this container)  -> per-app config
 #   :z = SHARED  SELinux label (several containers)   -> media + downloads
 #   %h expands to your home directory.
-# Volume=%h/<app_name>/config:/config:Z
-# Volume=%h/<app_name>/data:/data:z
+# Volume=%h/<appname>/config:/config:Z
+# Volume=%h/<appname>/data:/data:z
 
 
 [Service]
@@ -78,6 +82,10 @@
 
 # Grace period for slow first image pulls before systemd marks it failed.
 # TimeoutStartSec=300
+
+# Mount the container's root filesystem read-only. The app can only
+# write to mounted Volumes (/config, /data) — hardens against tampering.
+# ReadOnly=true
 
 
 [Install]
